@@ -2,9 +2,8 @@ from datetime import datetime
 import time
 import os
 import pyautogui
-import psutil
 from .motion import detect_motion
-from .process import kill_uvplayer_processes, find_uvplayer_shortcuts
+from .process import kill_uvplayer_processes, find_uvplayer_shortcuts, count_uvplayer_processes
 from .schedule import find_device_file, get_schedule_from_file
 from .utils import get_today_opencv_dir, create_log_file_if_not_exists, write_log_entry, save_screenshot, restart_computer
 
@@ -15,7 +14,7 @@ def main():
         log_filename = create_log_file_if_not_exists(opencv_dir)
         write_log_entry(log_filename, "Не знайдено жодного файлу -device.json.")
         return
-    
+
     try:
         start_time, end_time = get_schedule_from_file(device_file)
     except ValueError as e:
@@ -49,10 +48,10 @@ def main():
 
                 if kill_uvplayer_processes():
                     write_log_entry(log_filename, f"UVPlayer завершено. Перезапуск. Причина: Відсутність динаміки. Скрин: {screenshot_path}")
-                    time.sleep(1)
+                    time.sleep(2)
 
-                # 🔍 Порахувати кількість uvplayer.exe
-                uv_count = sum(1 for p in psutil.process_iter(['name']) if 'uvplayer' in (p.info['name'] or '').lower())
+                # 🔒 Остаточна перевірка на всі процеси
+                uv_count = count_uvplayer_processes()
                 if uv_count == 0:
                     for shortcut in uvplayer_shortcuts:
                         write_log_entry(log_filename, f"👉 Спроба запуску UVPlayer з ярлика: {shortcut}")
