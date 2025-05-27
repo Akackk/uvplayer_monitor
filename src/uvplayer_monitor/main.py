@@ -2,10 +2,10 @@ from datetime import datetime
 import time
 import os
 import pyautogui
-from .motion import detect_motion
-from .process import kill_uvplayer_processes, find_uvplayer_shortcuts, count_uvplayer_processes
-from .schedule import find_device_file, get_schedule_from_file
-from .utils import get_today_opencv_dir, create_log_file_if_not_exists, write_log_entry, save_screenshot, restart_computer
+from motion import detect_motion
+from process import kill_uvplayer_processes, find_uvplayer_shortcuts, count_uvplayer_processes
+from schedule import find_device_file, get_schedule_from_file
+from utils import get_today_opencv_dir, create_log_file_if_not_exists, write_log_entry, save_screenshot, restart_computer
 
 def main():
     device_file = find_device_file()
