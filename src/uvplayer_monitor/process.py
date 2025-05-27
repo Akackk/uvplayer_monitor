@@ -9,16 +9,21 @@ def kill_uvplayer_processes():
     for proc in psutil.process_iter(['name', 'pid']):
         try:
             if proc.info['name'] and 'uvplayer' in proc.info['name'].lower():
-                proc.kill()
-                proc.wait(5)  # Дочекатись завершення (до 5 сек)
+                proc.terminate()
+                try:
+                    proc.wait(timeout=5)
+                except psutil.TimeoutExpired:
+                    proc.kill()
                 killed = True
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             pass
 
+    time.sleep(1)
+
     # Примусово оновити системні іконки (трей)
     ctypes.windll.shell32.SHChangeNotify(0x8000000, 0x1000, None, None)
 
-    # Додаткова перевірка — чи щось лишилось
+    # Додаткова перевірка
     for proc in psutil.process_iter(['name', 'pid']):
         if proc.info['name'] and 'uvplayer' in proc.info['name'].lower():
             print(f"[⚠] Ще активний процес UVPlayer: PID={proc.info['pid']}")

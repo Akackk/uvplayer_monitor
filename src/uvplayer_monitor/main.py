@@ -51,9 +51,9 @@ def main():
                     write_log_entry(log_filename, f"UVPlayer завершено. Перезапуск. Причина: Відсутність динаміки. Скрин: {screenshot_path}")
                     time.sleep(1)
 
-                # 🛑 Перевірка, чи UVPlayer ще не працює
-                running = any('uvplayer' in (p.info['name'] or '').lower() for p in psutil.process_iter(['name']))
-                if not running:
+                # 🔍 Порахувати кількість uvplayer.exe
+                uv_count = sum(1 for p in psutil.process_iter(['name']) if 'uvplayer' in (p.info['name'] or '').lower())
+                if uv_count == 0:
                     for shortcut in uvplayer_shortcuts:
                         write_log_entry(log_filename, f"👉 Спроба запуску UVPlayer з ярлика: {shortcut}")
                         try:
@@ -62,7 +62,7 @@ def main():
                         except Exception as e:
                             write_log_entry(log_filename, f"⚠️ Помилка запуску UVPlayer: {e}")
                 else:
-                    write_log_entry(log_filename, "⚠️ UVPlayer вже запущено. Пропущено запуск.")
+                    write_log_entry(log_filename, f"⚠️ UVPlayer вже запущено ({uv_count} екземплярів). Пропущено запуск.")
 
                 time.sleep(2)
                 if not detect_motion():
