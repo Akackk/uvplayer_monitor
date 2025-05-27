@@ -2,6 +2,7 @@ from datetime import datetime
 import time
 import os
 import pyautogui
+import psutil
 from .motion import detect_motion
 from .process import kill_uvplayer_processes, find_uvplayer_shortcuts
 from .schedule import find_device_file, get_schedule_from_file
@@ -50,14 +51,18 @@ def main():
                     write_log_entry(log_filename, f"UVPlayer завершено. Перезапуск. Причина: Відсутність динаміки. Скрин: {screenshot_path}")
                     time.sleep(1)
 
-                for shortcut in uvplayer_shortcuts:
-                    write_log_entry(log_filename, f"👉 Спроба запуску UVPlayer з ярлика: {shortcut}")
-                    try:
-                        os.startfile(shortcut)
-                        time.sleep(5)
-                    except Exception as e:
-                        write_log_entry(log_filename, f"⚠️ Помилка запуску UVPlayer: {e}")
-                        continue
+                # 🛑 Перевірка, чи UVPlayer ще не працює
+                running = any('uvplayer' in (p.info['name'] or '').lower() for p in psutil.process_iter(['name']))
+                if not running:
+                    for shortcut in uvplayer_shortcuts:
+                        write_log_entry(log_filename, f"👉 Спроба запуску UVPlayer з ярлика: {shortcut}")
+                        try:
+                            os.startfile(shortcut)
+                            time.sleep(5)
+                        except Exception as e:
+                            write_log_entry(log_filename, f"⚠️ Помилка запуску UVPlayer: {e}")
+                else:
+                    write_log_entry(log_filename, "⚠️ UVPlayer вже запущено. Пропущено запуск.")
 
                 time.sleep(2)
                 if not detect_motion():
