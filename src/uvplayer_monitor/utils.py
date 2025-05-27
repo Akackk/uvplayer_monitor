@@ -3,14 +3,12 @@ import shutil
 from datetime import datetime
 import pyautogui
 
-def ensure_opencv_folder():
+def get_today_opencv_dir():
+    """Повертає шлях до директорії OpenCV на сьогодні, створюючи її при потребі."""
     base_dir = r"C:\Users\Public\OpenCV"
-    if not os.path.exists(base_dir):
-        os.makedirs(base_dir)
     current_date = datetime.now().strftime("%d-%m-%Y")
     date_dir = os.path.join(base_dir, current_date)
-    if not os.path.exists(date_dir):
-        os.makedirs(date_dir)
+    os.makedirs(date_dir, exist_ok=True)
     delete_old_folders(base_dir)
     return date_dir
 
