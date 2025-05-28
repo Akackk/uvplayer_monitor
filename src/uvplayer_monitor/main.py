@@ -2,11 +2,10 @@ import os
 import time
 import pyautogui
 from datetime import datetime
-
-from uvplayer_monitor.motion import detect_motion
-from uvplayer_monitor.process import kill_uvplayer_processes, find_uvplayer_shortcuts, count_uvplayer_processes
-from uvplayer_monitor.schedule import find_device_file, get_schedule_from_file
-from uvplayer_monitor.utils import (
+from motion import detect_motion
+from process import kill_uvplayer_processes, find_uvplayer_shortcuts
+from schedule import find_device_file, get_schedule_from_file
+from utils import (
     get_today_opencv_dir,
     create_log_file_if_not_exists,
     write_log_entry,
@@ -27,7 +26,7 @@ def main():
     except ValueError as e:
         opencv_dir = get_today_opencv_dir()
         log_filename = create_log_file_if_not_exists(opencv_dir)
-        write_log_entry(log_filename, str(e))
+        write_log_entry(log_filename, f"❌ {e}")
         return
 
     uvplayer_shortcuts = find_uvplayer_shortcuts()
@@ -38,6 +37,7 @@ def main():
         return
 
     unsuccessful_attempts = 0
+    log_filename = create_log_file_if_not_exists(get_today_opencv_dir())
 
     while True:
         opencv_dir = get_today_opencv_dir()
@@ -51,43 +51,32 @@ def main():
             motion_detected = detect_motion()
 
             if not motion_detected:
-                opencv_dir = get_today_opencv_dir()
-                log_filename = create_log_file_if_not_exists(opencv_dir)
-                write_log_entry(log_filename, "⛔ Динаміка: Ні")
-                screenshot_path = save_screenshot(opencv_dir)
+                write_log_entry(log_filename, "📷 Динаміка: Ні")
+                screenshot_path = save_screenshot(get_today_opencv_dir())
                 killed = kill_uvplayer_processes()
+
                 if killed:
-                    write_log_entry(log_filename, f"🛑 UVPlayer завершено. Перезапуск. Причина: Відсутність динаміки. Скрин: {screenshot_path}")
+                    write_log_entry(log_filename, f"🔁 UVPlayer завершено. Перезапуск.")
                     time.sleep(1)
 
                 for shortcut in uvplayer_shortcuts:
-                    write_log_entry(log_filename, f"👉 Спроба запуску UVPlayer з ярлика: {shortcut}")
                     try:
+                        write_log_entry(log_filename, f"▶️ Спроба запуску UVPlayer з ярлика: {shortcut}")
                         os.startfile(shortcut)
                         time.sleep(5)
-                    except Exception as e:
-                        write_log_entry(log_filename, f"⚠️ Помилка запуску UVPlayer: {e}")
-                        continue
+                    except Exception as ex:
+                        write_log_entry(log_filename, f"⚠️ Помилка запуску UVPlayer: {ex}")
 
-                time.sleep(2)
                 if not detect_motion():
                     unsuccessful_attempts += 1
                 else:
                     unsuccessful_attempts = 0
-            else:
-                unsuccessful_attempts = 0
 
-            if unsuccessful_attempts >= 3:
-                opencv_dir = get_today_opencv_dir()
-                log_filename = create_log_file_if_not_exists(opencv_dir)
-                write_log_entry(log_filename, "❌ Три невдалі спроби перезапуску. Перезавантаження системи.")
-                save_screenshot(opencv_dir)
-                restart_computer("Три невдалі спроби перезапуску UVPlayer")
+                if unsuccessful_attempts >= 3:
+                    write_log_entry(log_filename, "🔁 Три невдалі спроби. Перезавантаження.")
+                    restart_computer("UVPlayer завис — три спроби запуску без динаміки")
         else:
-            opencv_dir = get_today_opencv_dir()
-            log_filename = create_log_file_if_not_exists(opencv_dir)
-            write_log_entry(log_filename, "🕒 Зараз не робочий час UVPlayer. Очікування...")
-            time.sleep(60)
+            write_log_entry(log_filename, "⏰ Зараз не робочий час UVPlayer. Очікування...")
 
         time.sleep(10)
 
